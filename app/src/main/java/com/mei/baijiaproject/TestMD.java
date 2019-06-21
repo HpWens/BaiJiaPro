@@ -23,16 +23,17 @@ import java.util.regex.Pattern;
  */
 public class TestMD {
 
-    private static String testUrl = "http://longnuit.lofter.com/post/1f04bafb_1c5fb57f2?sharefrom=lofter-android-6.2.0&shareto=qq";
+    private static String testUrl = "http://juexixi.lofter.com/post/1d3d4306_1c5f5791c?sharefrom=lofter-android-6.2.5&shareto=qq";
 
     private static int line = 0;
     private static boolean startParse = false;
 
     private static List<String> results = new ArrayList<>();
 
-    private static String[] picIndexArray = new String[4];
     // 添加的图片张数
-    private static int picTotal = 4;
+    private static int picTotal = 6;
+
+    private static String[] picIndexArray = new String[picTotal];
 
     private static List<String> picList = new ArrayList<>();
 
@@ -50,7 +51,7 @@ public class TestMD {
     }
 
     private static void getPicArray() {
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < picTotal; i++) {
             getPicArrayIndex(i);
         }
     }
@@ -94,7 +95,7 @@ public class TestMD {
                         String[] result = m.group().trim().split("</p>");
                         for (String p : result) {
                             p = p.trim();
-                            if (p.startsWith("<p><strong>")) {
+                            if (p.startsWith("<p><strong>") || p.startsWith("<div>")) {
                                 if (startParse) continue;
                                 startParse = true;
                                 p = p.replaceAll("<p><strong><span>", "");
@@ -132,9 +133,9 @@ public class TestMD {
                     getPicArray();
 
                     int size = listMd.size();
-                    int count = size / 5;
+                    int count = size / (picTotal + 1);
                     for (int i = 0; i < picTotal; i++) {
-                        listMd.add(count + i * count + new Random().nextInt(2),
+                        listMd.add(count + i * count + (results.isEmpty() ? 0 : new Random().nextInt(3)),
                                 "\n" + "### " + translateNumToMan(i) + "\n" +
                                         "![](" + picIndexArray[i] + ")");
                     }
@@ -178,8 +179,12 @@ public class TestMD {
             case 1:
                 return "跌宕起伏";
             case 2:
-                return "高潮再起";
+                return "高潮渐起";
             case 3:
+                return "一波三折";
+            case 4:
+                return "高潮再起";
+            case 5:
                 return "未完待续";
         }
         return "道友请留步";
