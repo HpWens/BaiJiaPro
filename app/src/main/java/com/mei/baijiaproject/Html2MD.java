@@ -1,13 +1,13 @@
 package com.mei.baijiaproject;
 
+import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,60 +19,52 @@ import java.util.regex.Pattern;
  * @author wenshi
  * @github
  * @Description
- * @since 2019/6/19
+ * @since 2019/7/1
  */
-public class TestMD {
+public class Html2MD {
 
-    private static String testUrl = "http://juexixi.lofter.com/post/1d3d4306_1c60cd39c?sharefrom=lofter-android-6.2.5&shareto=qq";
 
-    private static int line = 0;
-    private static boolean startParse = false;
-
-    private static List<String> results = new ArrayList<>();
-
-    // 添加的图片张数
-    private static int picTotal = 6;
-
-    private static String[] picIndexArray = new String[picTotal];
+    public static String[] parseHtmlArray = {
+            "http://juexixi.lofter.com/post/1d3d4306_1c60cd39c?sharefrom=lofter-android-6.2.5&shareto=qq"
+    };
 
     private static List<String> picList = new ArrayList<>();
 
+    private static Pattern proInfo
+            = Pattern.compile("<div>(.*?)</div>\\s*<div>(.*?)</div>\\s*<div>(.*?)</div>\\s*<div>(.*?)</div>\\s*<div>(.*?)</div>", Pattern.DOTALL);
+
+    private static int MAX_PART_NUM = 20;
+
+    private static int MAX_PIC_NUM = 5;
+
     public static void main(String[] args) {
+        // 请求网络
         new Thread(new Runnable() {
             @Override
             public void run() {
-                picList = new ArrayList<>();
-                for (String s : pics) {
-                    picList.add(s);
+                picList.clear();
+                for (String pic : pics) {
+                    picList.add(pic);
                 }
-                getURLInfo(testUrl);
+                requestHttp();
             }
         }).start();
     }
 
-    private static void getPicArray() {
-        for (int i = 0; i < picTotal; i++) {
-            getPicArrayIndex(i);
+    private static void requestHttp() {
+        for (String url : parseHtmlArray) {
+            requestHtml2MD(url);
         }
     }
 
-    private static void getPicArrayIndex(int i) {
-        int i0 = new Random().nextInt(picList.size());
-        picIndexArray[i] = picList.get(i0);
-        picList.remove(i0);
-    }
-
-    static Pattern proInfo
-            = Pattern.compile("<div>(.*?)</div>\\s*<div>(.*?)</div>\\s*<div>(.*?)</div>\\s*<div>(.*?)</div>\\s*<div>(.*?)</div>", Pattern.DOTALL);
-
-    public static void getURLInfo(String addressUrl) {
-        results = new ArrayList<>();
+    private static void requestHtml2MD(String url) {
+        List<String> MDResultList = new ArrayList<>();
         try {
-            URL url = new URL(addressUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            if (connection.getResponseCode() == 200) {
-                connection.connect();
-                InputStream is = connection.getInputStream();
+            URL urlHtml = new URL(url);
+            HttpURLConnection conn = (HttpURLConnection) urlHtml.openConnection();
+            if (conn.getResponseCode() == 200) {
+                conn.connect();
+                InputStream is = conn.getInputStream();
                 BufferedReader br = new BufferedReader(new InputStreamReader(is, "utf-8"));
                 StringBuilder sb = new StringBuilder();
                 String line;
@@ -85,109 +77,145 @@ public class TestMD {
                 }
                 is.close();
                 br.close();
-                connection.disconnect();
+                conn.disconnect();
 
-                String[] info = sb.toString().trim().split("</li>");
+                String[] liArray = sb.toString().trim().split("</li>");
 
-                for (String s : info) {
-                    Matcher m = proInfo.matcher(s);
+                boolean isParseHtml = false;
+
+                for (String li : liArray) {
+                    Matcher m = proInfo.matcher(li);
                     if (m.find()) {
                         String[] result = m.group().trim().split("</p>");
                         for (String p : result) {
-                            p = p.trim();
-                            if (!startParse && (p.startsWith("<p><strong>") || p.startsWith("<br>"))) {
-                                startParse = true;
+                            // 去除空格符号
+                            p = p.replaceAll(" ", "");
+
+                            boolean filter = p.startsWith("<p><strong>") || p.startsWith("<br>");
+
+                            if (!isParseHtml && filter) {
+                                isParseHtml = true;
                                 p = p.replaceAll("<p><strong><span>", "");
                                 p = p.replaceAll("<br></span></strong>", "");
-                                results.add(p);
-                                continue;
+                                p = p.replaceAll("<p>", "");
+                                p = p.replaceAll("<br>", "");
+                                MDResultList.add(p);
                             }
 
-                            if (startParse) {
-                                // 添加标签
+                            if (!isParseHtml) continue;
+
+
+                            if (isParseHtml) {
+
+                                // 结束标签
                                 if (p.startsWith("</div>")) {
                                     p = p.replaceAll("</div>", "");
-                                    //这里是对样式进行处理
                                     p = p.replaceAll("<div>", "");
-                                    // .substring(0, p.indexOf("   "))
-                                    results.add(p.trim());
+                                    MDResultList.add(p.trim());
                                     break;
                                 }
 
+                                // 添加段落
                                 p = p.replaceAll("<p>", "");
                                 p = p.replaceAll("<br>", "");
                                 if (!p.trim().equals("") && !p.trim().equals("&nbsp;")) {
-                                    results.add(p);
+                                    MDResultList.add(p);
                                 }
+
                             }
 
                         }
                     }
                 }
 
-                System.out.println("aaaaaa" + results.size());
-
-                for (int j = 0; j < 3; j++) {
-                    int ss = results.size() / 3;
-                    List<String> listMd = results.subList(j * ss, j == 2 ? results.size() : ((j + 1) * ss));
-                    getPicArray();
-
-                    int size = listMd.size();
-                    int count = size / (picTotal + 1);
-                    for (int i = 0; i < picTotal; i++) {
-                        listMd.add(count + i * count + (results.isEmpty() || results.size() < 3 ? 0 : new Random().nextInt(3)),
-                                "\n" + "### " + translateNumToMan(i) + "\n" +
-                                        "![](" + picIndexArray[i] + ")");
-                    }
-
-                    File file = new File("D:\\0" + j + ".md");
-                    if (!file.exists()) {
-                        file.createNewFile();
-                    }
-
-                    StringBuilder ssb = new StringBuilder();
-                    int partIndex = 0;
-                    ssb.append("### 道友好久不见，甚是想念，别说话，吻我~~，小爱等着你哟 \n\n");
-                    for (String s : listMd) {
-                        partIndex++;
-                        ssb.append(s + (partIndex % 2 == 0 ? "\n\n" : ""));
-                    }
-                    ssb.append("\n\n ### 小爱专注《魔道祖师》番外，想看更多精彩，脑洞打开的番外，请点击上方关注小爱~~");
-
-                    if (file.isFile()) {
-                        FileWriter fileWriter = new FileWriter(file);
-                        fileWriter.write(ssb.toString());
-                        fileWriter.flush();
-                        fileWriter.close();
-                    }
-
+                if (MDResultList.isEmpty()) {
+                    return;
                 }
 
+                parseData(MDResultList);
             }
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+
+        }
+    }
+
+    private static void parseData(List<String> data) {
+        // 第一步 判定生成多少个MD文件
+        StringBuilder ssb = new StringBuilder();
+
+        int fileNum = 1;
+        fileNum = data.size() / MAX_PART_NUM;
+        if (fileNum == 0) fileNum = 1;
+
+        List<String> everyArticle = new ArrayList<>();
+        int parts = data.size() / fileNum;
+        for (int i = 0; i < fileNum; i++) {
+
+            everyArticle = data.subList(i * parts, i == (fileNum - 1) ? data.size() : (i + 1) * parts);
+
+            List<String> picList = getPicArray();
+
+            // 添加开篇段落
+            ssb.append("**想看有趣的《魔道祖师》番外吗？这里有可爱的皮皮羡；撩人的汪叽；正直的舅舅；还有33cm的小避尘。小道友，别忘记点击右上方的关注哟~~**");
+            ssb.append("\n\n");
+
+            // 添加图片
+            int size = everyArticle.size() / picList.size();
+
+            if (everyArticle.size() > picList.size()) {
+                for (int j = 0; j < picList.size(); j++) {
+                    everyArticle.add((j + 1) * size,
+                            "\n\n ### " + getTitle(j) + "\n"
+                                    + "![](" + picList.get(j) + ")" + "\n");
+                }
+            } else {
+                everyArticle.add(everyArticle.size() / 2, picList.get(0));
+            }
+
+            // 最后将两段合成一段 出去图片与标题
+            int part = 1;
+            for (String s : everyArticle) {
+                if (!s.startsWith("#") && !s.startsWith("!")) {
+                    part++;
+                }
+                ssb.append(s + (part % 2 == 0 ? "\n\n" : fileNum == 1 ? "\n\n" : ""));
+            }
+
+            // 添加结尾段落
+            ssb.append("**想看更多更精彩的《魔道祖师》番外，别忘记点击右上角关注：小爱说动漫~~**");
+            ssb.append("\n\n");
+
+            try {
+                File file = new File("D:\\0" + i + ".md");
+                if (!file.exists()) {
+                    file.createNewFile();
+                }
+
+                if (file.isFile()) {
+                    FileWriter fileWriter = new FileWriter(file);
+                    fileWriter.write(ssb.toString());
+                    fileWriter.flush();
+                    fileWriter.close();
+                }
+            } catch (Exception e) {
+
+            }
         }
 
     }
 
-    private static String translateNumToMan(int num) {
-        switch (num) {
-            case 0:
-                return "引人入胜";
-            case 1:
-                return "跌宕起伏";
-            case 2:
-                return "高潮渐起";
-            case 3:
-                return "一波三折";
-            case 4:
-                return "高潮再起";
-            case 5:
-                return "未完待续";
+    private static String getTitle(int num) {
+        return "番外0" + (num + 1);
+    }
+
+    private static List<String> getPicArray() {
+        List<String> pics = new ArrayList<>();
+        for (int i = 0; i < MAX_PIC_NUM; i++) {
+            int index = new Random().nextInt(picList.size());
+            pics.add(picList.get(index));
+            picList.remove(index);
         }
-        return "道友请留步";
+        return pics;
     }
 
     private static String[] pics = {
