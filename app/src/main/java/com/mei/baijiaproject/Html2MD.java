@@ -1,7 +1,5 @@
 package com.mei.baijiaproject;
 
-import android.util.Log;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
@@ -25,10 +23,12 @@ public class Html2MD {
 
 
     public static String[] parseHtmlArray = {
-            "http://juexixi.lofter.com/post/1d3d4306_1c60cd39c?sharefrom=lofter-android-6.2.5&shareto=qq"
+            "http://knowbox.lofter.com/post/1d0f388e_ae39e5e?sharefrom=lofter-android-6.2.6&shareto=qq"
     };
 
     private static List<String> picList = new ArrayList<>();
+
+    private static List<String> MDResultList = new ArrayList<>();
 
     private static Pattern proInfo
             = Pattern.compile("<div>(.*?)</div>\\s*<div>(.*?)</div>\\s*<div>(.*?)</div>\\s*<div>(.*?)</div>\\s*<div>(.*?)</div>", Pattern.DOTALL);
@@ -58,7 +58,6 @@ public class Html2MD {
     }
 
     private static void requestHtml2MD(String url) {
-        List<String> MDResultList = new ArrayList<>();
         try {
             URL urlHtml = new URL(url);
             HttpURLConnection conn = (HttpURLConnection) urlHtml.openConnection();
@@ -132,31 +131,37 @@ public class Html2MD {
                     return;
                 }
 
-                parseData(MDResultList);
+                parseData();
             }
         } catch (Exception e) {
 
         }
     }
 
-    private static void parseData(List<String> data) {
+    private static void parseData() {
         // 第一步 判定生成多少个MD文件
         StringBuilder ssb = new StringBuilder();
 
         int fileNum = 1;
-        fileNum = data.size() / MAX_PART_NUM;
+        fileNum = MDResultList.size() / MAX_PART_NUM;
         if (fileNum == 0) fileNum = 1;
 
         List<String> everyArticle = new ArrayList<>();
-        int parts = data.size() / fileNum;
+        int parts = MDResultList.size() / fileNum;
         for (int i = 0; i < fileNum; i++) {
+            ssb = new StringBuilder();
+            List<String> data = new ArrayList<>();
+            data.addAll(MDResultList);
 
-            everyArticle = data.subList(i * parts, i == (fileNum - 1) ? data.size() : (i + 1) * parts);
+            everyArticle = new ArrayList<>();
+            everyArticle.addAll(data.subList(i * parts, (i == (fileNum - 1)) ? data.size() : (i + 1) * parts));
+
+            System.out.println("" + everyArticle.size() + "****" + i);
 
             List<String> picList = getPicArray();
 
             // 添加开篇段落
-            ssb.append("**想看有趣的《魔道祖师》番外吗？这里有可爱的皮皮羡；撩人的汪叽；正直的舅舅；还有33cm的小避尘。小道友，别忘记点击右上方的关注哟~~**");
+            ssb.append("**想看有趣的《魔道祖师》番外吗？这里有可爱的皮皮羡；撩人的汪叽；正直的舅舅；还有虐心的薛晓。可爱的道友们别忘记点击右上方的关注哟~~**");
             ssb.append("\n\n");
 
             // 添加图片
@@ -311,5 +316,24 @@ public class Html2MD {
             "http://imglf4.nosdn.127.net/img/bXpDUVJEUHlOYmJRVEtSeG84c3VWT1JWOUpNOXdkNmFXbnhkU20rODlnNlpxSkdJMVFCNWN3PT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
             "http://imglf3.nosdn0.126.net/img/bXpDUVJEUHlOYmFhUG1ISzQxTy84K2VwdEx4VzJOZE03aThhWXloN3ZHcDUwYUZqTzdWN1Z3PT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
             "http://imglf3.nosdn0.126.net/img/Z2ZCK0FLUlNBY0ZYaGVWRUdtYVdMdENKdTA1MXNPV2JxcEFqcklXMmtpUEg1SEIwazJGQ1hnPT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
+            "http://imglf5.nosdn0.126.net/img/eXpaTnFvNTh4N0tZVlFPN1VwM2pPMHFjM0JsM3RaNStDZE1IeHNmblk5YWxBZ1FuM3VwY1d3PT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
+            "http://imglf5.nosdn0.126.net/img/TEw2cTEwZ1NIRnRsdmlPczlGaGV1c1M1d0hraXNCQS94TWtCeUxzcXZXY3hxK0w4RXpPODVnPT0.jpg?imageView&thumbnail=640x0&quality=1&stripmeta=0&type=jpg",
+            "http://imglf4.nosdn0.126.net/img/R0NDZ0hHUWg4UGlRcHhUSXlRcFhMdEhueEVxanp3c0w1SXJsSlptQnY0UEI5ZVpwQkVUL3pRPT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
+            "http://imglf4.nosdn0.126.net/img/R0NDZ0hHUWg4UGlRcHhUSXlRcFhMb0lmL205ZVFIS1lINWtEU2FmUEFORms5Z045bzRiMWtnPT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
+            "http://imglf3.nosdn0.126.net/img/R0NDZ0hHUWg4UGlRcHhUSXlRcFhMdmxVV2V6dlhmN0o2dWE2UTBGZkF6b3BpRWZWRmVHbi9RPT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
+            "http://imglf5.nosdn0.126.net/img/R0NDZ0hHUWg4UGlRcHhUSXlRcFhMazMzeVpiWG1vb2V0SmJjN3V1RWFOa2FxbGlpRnFLZFdBPT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
+            "http://imglf3.nosdn.127.net/img/clBMd0JTVUJ1L1hsY3h0TGlMdS9VOGZ4cnBVYXVDVEFaUHNrSk9ENmRPN2g1ME9vemI2OG1BPT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
+            "http://imglf6.nosdn0.126.net/img/RHRhY0VIQmlDcE1pTnRJMFp3S3dMWWNMMnVwQXJSQ2Q0aDMvYldVWUxLM2svNXRjVFlzYUZ3PT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
+            "http://imglf4.nosdn0.126.net/img/RHRhY0VIQmlDcE93TjVhMzdJUzAyVndrMXBZNUdMRGpwekpHQ1R6OTJ2bnRIY0dxRFlYQk1RPT0.png?imageView&thumbnail=640x0&quality=100&stripmeta=0",
+            "http://imglf5.nosdn0.126.net/img/RHRhY0VIQmlDcFBzeVJYODZweDZaRndjQVFHWWd6S3hTM3QyVmV4b1A3OFpqeUVuUzBxSTJnPT0.png?imageView&thumbnail=640x0&quality=100&stripmeta=0",
+            "http://imglf5.nosdn0.126.net/img/RHRhY0VIQmlDcFA5UzQvUFFUSVJRcmRyOFZzZm9SWmxKWlVwbzIybHE2M0o2TVcyZWhyUWpRPT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
+            "http://imglf6.nosdn0.126.net/img/RHRhY0VIQmlDcE1pTnRJMFp3S3dMWWNMMnVwQXJSQ2Q0aDMvYldVWUxLM2svNXRjVFlzYUZ3PT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
+            "http://imglf5.nosdn0.126.net/img/RHRhY0VIQmlDcFBqV1JCUVBla0duQmh3eWRMNlczQ1NiZVZWVWZQRzdFc3VSUkZNdFFmWUN3PT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
+            "http://imglf5.nosdn0.126.net/img/a1hXSmdpTmVrN1hLSlFBZllIdXpnYis0TEpLbTEwcnBIN1EwOGRFblpVV0xNc1VUZVRtRXhnPT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
+            "http://imglf3.nosdn0.126.net/img/a1hXSmdpTmVrN1gvN0REcEpCV2g2SkFLWkZudHFKOGFBZTdZREYrdFR4WDEwdDNrTmxUMmtRPT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
+            "http://imglf3.nosdn0.126.net/img/a1hXSmdpTmVrN1gvN0REcEpCV2g2T0E5Z0tSNzQ0Mkc5azdYMjR0UksxNXJ1OGpZL2hMbG1nPT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
+            "http://imglf6.nosdn0.126.net/img/a1hXSmdpTmVrN1h5YTNEUDJpNTVJSWtPM3pYSFlBQnpoeWpMUm9KKzlkU2ZpLzV1UlMrMkRRPT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
+            "http://imglf5.nosdn0.126.net/img/UWt3dWdLcVBGdURVQmxvSGV1cHRadFdadWlubjErU2NTdldwKzBDblB0Y2xrTEIra0tTU2FBPT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg",
+            "http://imglf4.nosdn0.126.net/img/UWt3dWdLcVBGdUIwcisveFVaUGVxVjhLRHdFUlp5Wkt2NVM5VmJicTF3YmQ2VjhmVzhUaXp3PT0.jpg?imageView&thumbnail=640x0&quality=100&stripmeta=0&type=jpg"
     };
 }
