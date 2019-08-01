@@ -23,7 +23,7 @@ public class Html2MD {
 
 
     public static String[] parseHtmlArray = {
-            "http://knowbox.lofter.com/post/1d0f388e_ae39e5e?sharefrom=lofter-android-6.2.6&shareto=qq"
+            "http://knowbox.lofter.com/post/1d0f388e_b0e831d?sharefrom=lofter-android-6.2.6&shareto=qq"
     };
 
     private static List<String> picList = new ArrayList<>();
@@ -83,14 +83,21 @@ public class Html2MD {
                 boolean isParseHtml = false;
 
                 for (String li : liArray) {
-                    Matcher m = proInfo.matcher(li);
+                    Matcher m = proInfo.matcher(li = li.replaceAll(" ", ""));
                     if (m.find()) {
-                        String[] result = m.group().trim().split("</p>");
+                        String input = m.group().trim();
+                        if (input.length() < 500) {
+                            input = li.substring(li.indexOf("<h2>"));
+                        }
+                        String[] result = input.split("</p>");
                         for (String p : result) {
                             // 去除空格符号
                             p = p.replaceAll(" ", "");
 
-                            boolean filter = p.startsWith("<p><strong>") || p.startsWith("<br>");
+                            boolean filter = p.startsWith("<p><strong>") || p.startsWith("<br>")
+                                    || p.startsWith("<p><br>");
+
+                            System.out.println("**" + p + "***" + filter);
 
                             if (!isParseHtml && filter) {
                                 isParseHtml = true;
@@ -125,6 +132,9 @@ public class Html2MD {
 
                         }
                     }
+
+                    // 解析停止
+                    break;
                 }
 
                 if (MDResultList.isEmpty()) {
