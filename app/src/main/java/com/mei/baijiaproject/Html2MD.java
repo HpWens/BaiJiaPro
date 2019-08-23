@@ -95,7 +95,7 @@ public class Html2MD {
                             p = p.replaceAll(" ", "");
 
                             boolean filter = p.startsWith("<p><strong>") || p.startsWith("<br>")
-                                    || p.startsWith("<p><br>");
+                                    || p.startsWith("<p><br>") || p.contains("<h2>");
 
                             System.out.println("**" + p + "***" + filter);
 
